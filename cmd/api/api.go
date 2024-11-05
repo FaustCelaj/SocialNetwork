@@ -17,6 +17,21 @@ type application struct {
 
 type config struct {
 	addr string
+	// config the db into the runtime so each environment has access to it
+	db dbConfig
+}
+
+type dbConfig struct {
+	// connection address string for the PostgreSQL database
+	addr string
+	// Specifies the maximum number of open connections allowed to the database
+	// Limiting this helps control database load and resource usage
+	maxOpenConns int
+	// Defines the maximum number of idle connections
+	// helps reduce the number of active connections that are not being used, which saves resources
+	maxIdleConns int
+	// Specifies the maximum idle time allowed for a connection
+	maxIdleTime string
 }
 
 func (app *application) mount() http.Handler {
