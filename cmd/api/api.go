@@ -18,7 +18,8 @@ type application struct {
 type config struct {
 	addr string
 	// config the db into the runtime so each environment has access to it
-	db dbConfig
+	db  dbConfig
+	env string
 }
 
 type dbConfig struct {
