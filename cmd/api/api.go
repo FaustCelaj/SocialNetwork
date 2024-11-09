@@ -51,6 +51,10 @@ func (app *application) mount() http.Handler {
 	// we can group multiple routes together and set what we want to do with whatever comes after
 	r.Route("/v1", func(r chi.Router) {
 		r.Get("/health", app.healthCheckHandler)
+
+		r.Route("/posts", func(r chi.Router) {
+			r.Post("/", app.createPostsHandler)
+		})
 	})
 
 	return r
