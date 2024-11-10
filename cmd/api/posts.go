@@ -19,7 +19,7 @@ type CreatePostPayload struct {
 func (app *application) createPostsHandler(w http.ResponseWriter, r *http.Request) {
 	var payload CreatePostPayload
 	if err := readJSON(w, r, &payload); err != nil {
-		writeJsonError(w, http.StatusBadRequest, err.Error())
+		app.StatusBadRequest(w, r, err)
 		return
 	}
 
@@ -34,12 +34,12 @@ func (app *application) createPostsHandler(w http.ResponseWriter, r *http.Reques
 	ctx := r.Context()
 
 	if err := app.store.Posts.Create(ctx, post); err != nil {
-		writeJsonError(w, http.StatusBadRequest, err.Error())
+		app.InternalServerError(w, r, err)
 		return
 	}
 
 	if err := writeJSON(w, http.StatusCreated, post); err != nil {
-		writeJsonError(w, http.StatusInternalServerError, err.Error())
+		app.InternalServerError(w, r, err)
 		return
 	}
 }
@@ -50,7 +50,7 @@ func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(idParam, 10, 64)
 
 	if err != nil {
-		writeJsonError(w, http.StatusInternalServerError, err.Error())
+		app.InternalServerError(w, r, err)
 		return
 	}
 
@@ -61,15 +61,15 @@ func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, store.ErrNotFound):
-			writeJsonError(w, http.StatusNotFound, err.Error())
+			app.NotFoundResponse(w, r, err)
 		default:
-			writeJsonError(w, http.StatusInternalServerError, err.Error())
+			app.InternalServerError(w, r, err)
 		}
 		return
 	}
 
 	if err := writeJSON(w, http.StatusOK, post); err != nil {
-		writeJsonError(w, http.StatusInternalServerError, err.Error())
+		app.InternalServerError(w, r, err)
 		return
 	}
 }
