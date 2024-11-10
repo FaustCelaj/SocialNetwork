@@ -1,9 +1,12 @@
 package main
 
 import (
+	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/faustcelaj/social_project/internal/store"
+	"github.com/go-chi/chi/v5"
 )
 
 // creates just the feilds we accept
@@ -36,7 +39,37 @@ func (app *application) createPostsHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err := writeJSON(w, http.StatusCreated, post); err != nil {
-		writeJsonError(w, http.StatusBadRequest, err.Error())
+		writeJsonError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
+
+func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
+	// parsing the URL parameters
+	idParam := chi.URLParam(r, "postID")
+	id, err := strconv.ParseInt(idParam, 10, 64)
+
+	if err != nil {
+		writeJsonError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	ctx := r.Context()
+
+	post, err := app.store.Posts.GetById(ctx, id)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, store.ErrNotFound):
+			writeJsonError(w, http.StatusNotFound, err.Error())
+		default:
+			writeJsonError(w, http.StatusInternalServerError, err.Error())
+		}
+		return
+	}
+
+	if err := writeJSON(w, http.StatusOK, post); err != nil {
+		writeJsonError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 }
