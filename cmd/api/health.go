@@ -16,6 +16,6 @@ func (app *application) healthCheckHandler(w http.ResponseWriter, r *http.Reques
 	// Calls our function we made to format this data as json and send it as HTTP response status 200
 	// handle error if any
 	if err := writeJSON(w, http.StatusOK, data); err != nil {
-		writeJsonError(w, http.StatusInternalServerError, "err.Error()")
+		app.InternalServerError(w, r, err)
 	}
 }
