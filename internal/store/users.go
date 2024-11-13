@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
 )
 
 type User struct {
@@ -26,7 +27,6 @@ type UserStore struct {
 // s *UsersStore indicates that the method is defined on a pointer reciever of the type UsersStore
 // meaning that the method can modify the instance it is called on, and allows it to access the db
 
-// ctx context.Context
 func (s *UserStore) Create(ctx context.Context, user *User) error {
 	query := `
 	INSERT INTO users (username, password, email)
@@ -38,12 +38,14 @@ func (s *UserStore) Create(ctx context.Context, user *User) error {
 	defer cancel()
 
 	err := s.db.QueryRowContext(
+		// these are the paramaters what we want to insert
 		ctx,
 		query,
 		user.Username,
 		user.Password,
 		user.Email,
 	).Scan(
+		//the Scan is retreiving the generated feilds (since we dont create these oursleves)
 		&user.ID,
 		&user.CreatedAt,
 		&user.UpdatedAt,
@@ -54,4 +56,38 @@ func (s *UserStore) Create(ctx context.Context, user *User) error {
 	}
 
 	return nil
+}
+
+func (s *UserStore) GetById(ctx context.Context, id int64) (*User, error) {
+	query := `
+	SELECT id, email, username, password, created_at, updated_at
+	FROM users
+	WHERE id = $1
+	`
+
+	user := &User{}
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	// here we are scanning all the feilds created. since it is already done we can just scan for it unlike the create request where they are being inserted
+	err := s.db.QueryRowContext(ctx, query, id).Scan(
+		&user.ID,
+		&user.Email,
+		&user.Username,
+		&user.Password,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return user, nil
 }
