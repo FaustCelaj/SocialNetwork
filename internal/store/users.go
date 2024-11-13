@@ -11,6 +11,7 @@ type User struct {
 	Password  string `json:"-"`
 	Email     string `json:"email"`
 	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 // represents a store/repository for user data
@@ -45,6 +46,7 @@ func (s *UserStore) Create(ctx context.Context, user *User) error {
 	).Scan(
 		&user.ID,
 		&user.CreatedAt,
+		&user.UpdatedAt,
 	)
 
 	if err != nil {

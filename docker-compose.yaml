@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   db:
     image: postgres:16.3
@@ -6,6 +8,8 @@ services:
       POSTGRES_DB: socialnetwork
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: adminpassword
+    networks:
+      - backend 
     volumes:
       - db-data:/var/lib/postgresql/data
     ports:
@@ -13,3 +17,7 @@ services:
 
 volumes:
   db-data:
+
+networks:
+  backend:
+    driver: bridge
