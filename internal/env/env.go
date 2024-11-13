@@ -14,9 +14,7 @@ func GetString(key, fallback string) string {
 
 	// check if the env variable exists
 	val, ok := os.LookupEnv(key)
-	// if exists (ok = true) returns the value
 	if !ok {
-		// of (ok = false) it returns the fallback
 		return fallback
 	}
 
