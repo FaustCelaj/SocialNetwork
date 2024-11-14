@@ -25,12 +25,12 @@ type CreatePostPayload struct {
 func (app *application) createPostsHandler(w http.ResponseWriter, r *http.Request) {
 	var payload CreatePostPayload
 	if err := readJSON(w, r, &payload); err != nil {
-		app.StatusBadRequest(w, r, err)
+		app.badRequestResponse(w, r, err)
 		return
 	}
 
 	if err := Validate.Struct(payload); err != nil {
-		app.StatusBadRequest(w, r, err)
+		app.badRequestResponse(w, r, err)
 		return
 	}
 
@@ -84,12 +84,12 @@ func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request
 
 	var payload UpdatePostPayload
 	if err := readJSON(w, r, &payload); err != nil {
-		app.StatusBadRequest(w, r, err)
+		app.badRequestResponse(w, r, err)
 		return
 	}
 
 	if err := Validate.Struct(payload); err != nil {
-		app.StatusBadRequest(w, r, err)
+		app.badRequestResponse(w, r, err)
 		return
 	}
 
@@ -126,7 +126,7 @@ func (app *application) deletePostHandler(w http.ResponseWriter, r *http.Request
 	if err := app.store.Posts.Delete(ctx, id); err != nil {
 		switch {
 		case errors.Is(err, store.ErrNotFound):
-			app.NotFoundResponse(w, r, err)
+			app.notFoundResponse(w, r, err)
 		default:
 			app.InternalServerError(w, r, err)
 		}
@@ -152,7 +152,7 @@ func (app *application) postsContextMiddleware(next http.Handler) http.Handler {
 		if err != nil {
 			switch {
 			case errors.Is(err, store.ErrNotFound):
-				app.NotFoundResponse(w, r, err)
+				app.notFoundResponse(w, r, err)
 			default:
 				app.InternalServerError(w, r, err)
 			}
