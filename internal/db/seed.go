@@ -99,7 +99,7 @@ var comments = []string{
 func Seed(store store.Storage, db *sql.DB) {
 	ctx := context.Background()
 
-	users := generateUsers(100)
+	users := generateUsers(200)
 	for _, user := range users {
 		if err := store.Users.Create(ctx, user); err != nil {
 			log.Println("error creating users", err)

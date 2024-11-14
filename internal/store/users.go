@@ -18,7 +18,7 @@ type User struct {
 // represents a store/repository for user data
 type UserStore struct {
 	// holds a pointer to the sql.DB instance (part of the Go database/sql package)
-	// this enables us to perform sql queries against the dv
+	// this enables us to perform sql queries against the db
 	// by including it in the struct the UsersStore can interact with the db to perform CRUD operations
 	db *sql.DB
 }
