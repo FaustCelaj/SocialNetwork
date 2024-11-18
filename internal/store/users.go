@@ -4,16 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"time"
 )
 
 type User struct {
-	ID        int64     `json:"id"`
-	Username  string    `json:"Username"`
-	Password  string    `json:"-"`
-	Email     string    `json:"email"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        int64  `json:"id"`
+	Username  string `json:"Username"`
+	Password  string `json:"-"`
+	Email     string `json:"email"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 // represents a store/repository for user data
