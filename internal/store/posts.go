@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
 
 	"github.com/lib/pq"
 )
@@ -18,6 +19,12 @@ type Post struct {
 	UpdatedAt string    `json:"updated_at"`
 	Version   int       `json:"versionma"`
 	Comments  []Comment `json:"comments"`
+	User      User      `json:"user"`
+}
+
+type PostsForFeed struct {
+	Post
+	CommentsCount int `json:"comments_count"`
 }
 
 type PostStore struct {
@@ -61,7 +68,7 @@ func (s *PostStore) Create(ctx context.Context, post *Post) error {
 	return nil
 }
 
-// fetching an existing post
+// fetching a post
 func (s *PostStore) GetById(ctx context.Context, id int64) (*Post, error) {
 	query := `
 	SELECT id, user_id, title, content, created_at, updated_at, tags, version
@@ -97,7 +104,62 @@ func (s *PostStore) GetById(ctx context.Context, id int64) (*Post, error) {
 	return &post, nil
 }
 
-// deleting an existing post
+func (s *PostStore) GetUserFeed(ctx context.Context, userID int64) ([]PostsForFeed, error) {
+	query := `
+		SELECT
+			p.id,
+			p.user_id,
+			p.title,
+			p.content,
+			p.tags,
+			p.created_at,
+			p.version,
+			u.username,
+			COUNT(c.id) AS comments_count
+		FROM posts p
+		LEFT JOIN comments c ON c.post_id = p.id
+		LEFT JOIN users u ON p.user_id = u.id
+		JOIN followers f ON f.follower_id = p.user_id OR p.user_id = $1
+		WHERE f.user_id = $1 OR p.user_id = $1
+		GROUP BY p.id, u.username
+		ORDER BY p.created_at DESC;
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	rows, err := s.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		log.Printf("Query failed: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var feed []PostsForFeed
+	for rows.Next() {
+		var p PostsForFeed
+		err := rows.Scan(
+			&p.ID,
+			&p.UserID,
+			&p.Title,
+			&p.Content,
+			pq.Array(&p.Tags),
+			&p.CreatedAt,
+			&p.Version,
+			&p.User.Username,
+			&p.CommentsCount,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		feed = append(feed, p)
+	}
+
+	return feed, nil
+}
+
+// deleting a post
 func (s *PostStore) Delete(ctx context.Context, postID int64) error {
 	query := `DELETE FROM posts WHERE id = $1`
 
@@ -122,6 +184,7 @@ func (s *PostStore) Delete(ctx context.Context, postID int64) error {
 	return nil
 }
 
+// updating a post
 func (s *PostStore) Update(ctx context.Context, post *Post) error {
 	query := `
 	UPDATE posts
